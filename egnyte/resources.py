@@ -22,7 +22,7 @@ class FileOrFolder(base.Resource):
 
     def link(self, accessibility, recipients=None, send_email=None, message=None,
              copy_me=None, notify=None, link_to_current=None,
-             expiry_date=None, expiry_clicks=None, add_filename=None):
+             expiry_date=None, expiry_clicks=None, add_filename=None, password=None):
         """
         Create a link.
 
@@ -36,13 +36,15 @@ class FileOrFolder(base.Resource):
         * expiry_date: The expiry date for the link. If expiry_date is specified, expiry_clicks cannot be set (future date as datetime.date or string in YYYY-MM-DD format)
         * expiry_clicks: The number of times the link can be clicked before it stops working. If expiry_clicks is specified, expiry_date cannot be set (value must be between 1 - 10, inclusive)
         * add_filename: If True then the filename will be appended to the end of the link. Only applies to file links, not folder links.
+        * password: optional param to set the password to this folder
 
         Will return sequence of created Links, one for each recipient.
         """
         return Links(self._client).create(path=self.path, type=self._link_kind, accessibility=accessibility,
                                           recipients=recipients, send_email=send_email, message=message,
                                           copy_me=copy_me, notify=notify, link_to_current=link_to_current,
-                                          expiry_date=expiry_date, expiry_clicks=expiry_clicks, add_filename=add_filename)
+                                          expiry_date=expiry_date, expiry_clicks=expiry_clicks, add_filename=add_filename,
+                                          password=password)
 
     def _get(self):
         """Get the right object type (File or Folder), depending on what this path points to in the Cloud File System"""
@@ -341,7 +343,7 @@ class Links(base.HasClient):
                recipients=None, send_email=None, message=None,
                copy_me=None, notify=None, link_to_current=None,
                expiry_date=None, expiry_clicks=None, add_filename=None,
-               ):
+               password=None):
         """
         Create links.
 
@@ -361,10 +363,13 @@ class Links(base.HasClient):
         Will return a sequence of created Links, one for each recipient.
         """
         url = self._client.get_url(self._url_template)
-        data = base.filter_none_values(dict(path=path, type=type, accessibility=accessibility, send_email=send_email,
+        dict = dict(path=path, type=type, accessibility=accessibility, send_email=send_email,
                                             copy_me=copy_me, notify=notify, add_filename=add_filename, link_to_current=link_to_current,
                                             expiry_clicks=expiry_clicks, expiry_date=base.date_format(expiry_date),
-                                            recipients=recipients, message=message))
+                                            recipients=recipients, message=message)
+        if password:
+            dict.update(dict(password=password))
+        data = base.filter_none_values(dict)
         response = exc.default.check_json_response(self._client.POST(url, data))
         # This response has weird structure
         links = response.pop('links')
