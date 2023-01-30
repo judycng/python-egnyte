@@ -363,13 +363,13 @@ class Links(base.HasClient):
         Will return a sequence of created Links, one for each recipient.
         """
         url = self._client.get_url(self._url_template)
-        dict = dict(path=path, type=type, accessibility=accessibility, send_email=send_email,
+        dict_vals = dict(path=path, type=type, accessibility=accessibility, send_email=send_email,
                                             copy_me=copy_me, notify=notify, add_filename=add_filename, link_to_current=link_to_current,
                                             expiry_clicks=expiry_clicks, expiry_date=base.date_format(expiry_date),
                                             recipients=recipients, message=message)
         if password:
-            dict.update(dict(password=password))
-        data = base.filter_none_values(dict)
+            dict_vals.update(dict(password=password))
+        data = base.filter_none_values(dict_vals)
         response = exc.default.check_json_response(self._client.POST(url, data))
         # This response has weird structure
         links = response.pop('links')
